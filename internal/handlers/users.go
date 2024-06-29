@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/moxicom/user_test/internal/models"
 	"github.com/moxicom/user_test/internal/utils"
 )
 
@@ -41,18 +41,12 @@ func (h *Handler) CreateUser(c *gin.Context) {
 }
 
 func (h *Handler) GetUsers(c *gin.Context) {
-	filters := models.Filters{
-		PassportNumber: c.Query("passport_number"),
-		Surname:        c.Query("surname"),
-		Name:           c.Query("name"),
-		Patronymic:     c.Query("patronymic"),
-		Address:        c.Query("address"),
-	}
+	log := h.log.With(slog.String("op", "handler.GetUsers"))
+	filt := utils.GetFilters(c)
 
-	// TODO: service - get users
-	users, err := h.service.GetUsers(filters)
+	users, err := h.service.GetUsers(filt)
 	if err != nil {
-		h.log.Error("failed to get users")
+		log.Error("failed to get users")
 		c.JSON(http.StatusInternalServerError, Message{"failed to get users"})
 		return
 	}
@@ -61,37 +55,58 @@ func (h *Handler) GetUsers(c *gin.Context) {
 }
 
 func (h *Handler) UpdateUser(c *gin.Context) {
-	f := models.Filters{
-		PassportNumber: c.Query("passport_number"),
-		Surname:        c.Query("surname"),
-		Name:           c.Query("name"),
-		Patronymic:     c.Query("patronymic"),
-		Address:        c.Query("address"),
+	log := h.log.With(slog.String("op", "handler.UpdateUser"))
+	filt := utils.GetFilters(c)
+	id64, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		log.Error("failed to parse id")
+		c.JSON(http.StatusBadRequest, Message{"incorrect id"})
+		return
 	}
-	c.Param("id")
 
-	if f.Address == "" && f.Name == "" && f.Patronymic == "" && f.PassportNumber == "" && f.Surname == "" {
+	if filt.Address == "" && filt.Name == "" && filt.Patronymic == "" && filt.PassportNumber == "" && filt.Surname == "" {
+		log.Error("no data to update")
 		c.JSON(http.StatusBadRequest, Message{"no data to update. use passport_number, surname, name, patronymic, address"})
 		return
 	}
 
 	// Validate password number
-	if f.PassportNumber != "" {
-		ok := utils.ValidatePassword(f.PassportNumber)
+	if filt.PassportNumber != "" {
+		ok := utils.ValidatePassword(filt.PassportNumber)
 		if !ok {
-			h.log.Error(fmt.Sprintf("invalid passport number: %s", f.PassportNumber))
+			h.log.Error(fmt.Sprintf("invalid passport number: %s", filt.PassportNumber))
 			c.JSON(http.StatusBadRequest, Message{"invalid passport number"})
 			return
 		}
 	}
 
-	// TODO: service - update user
+	err = h.service.UpdateUser(uint(id64), filt)
+	if err != nil {
+		log.Error("failed to update user", err)
+		c.JSON(http.StatusInternalServerError, Message{"failed to update user"})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, Message{"user updated"})
 }
 
 func (h *Handler) DeleteUser(c *gin.Context) {
+	log := h.log.With(slog.String("op", "handler.DeleteUser"))
 	id := c.Param("id")
-	h.log.Debug(id)
-	// TODO: service - delete User
+	id64, err := strconv.ParseUint(id, 10, 32)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = h.service.DeleteUser(uint(id64))
+	if err != nil {
+		log.Error("failed to delete user", slog.String("id", id))
+		c.JSON(http.StatusInternalServerError, Message{"failed to delete user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, Message{"user deleted"})
 }
 
 func (h *Handler) GetUsersWithTasks(c *gin.Context) {

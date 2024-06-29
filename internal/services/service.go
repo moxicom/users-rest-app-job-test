@@ -10,8 +10,8 @@ import (
 type User interface {
 	GetUsers(models.Filters) ([]models.User, error)
 	CreateUser(string) (uint, error)
-	DeleteUser(int) error
-	UpdateUser(models.User) error
+	DeleteUser(uint) error
+	UpdateUser(uint, models.Filters) error
 }
 
 type Tasks interface {

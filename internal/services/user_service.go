@@ -19,7 +19,7 @@ func newUserService(s storage.Storage, log *slog.Logger) *UserService {
 func (s *UserService) CreateUser(passport string) (uint, error) {
 	log := s.log.With(slog.String("op", "service.CreateUser"))
 
-	// TODO: UNCOMMIT LATER
+	// TODO: UNCOMMIT LATER - use api to get user data
 	// user, err := utils.GetUserData(passport)
 	// if err != nil {
 	// 	log.Error("failed to get user data")
@@ -45,14 +45,13 @@ func (s *UserService) CreateUser(passport string) (uint, error) {
 }
 
 func (s *UserService) GetUsers(f models.Filters) ([]models.User, error) {
-	users, err := s.s.GetUsers(f)
-	if err != nil {
-		return []models.User{}, err
-	}
-
-	return users, nil
+	return s.s.GetUsers(f)
 }
 
-func (s *UserService) DeleteUser(int) error { return nil }
+func (s *UserService) DeleteUser(userID uint) error {
+	return s.s.DeleteUser(userID)
+}
 
-func (s *UserService) UpdateUser(models.User) error { return nil }
+func (s *UserService) UpdateUser(userID uint, filters models.Filters) error {
+	return s.s.UpdateUser(userID, filters)
+}

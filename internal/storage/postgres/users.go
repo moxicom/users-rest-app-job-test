@@ -52,3 +52,52 @@ func (p *PgStorage) GetUsers(filters models.Filters) ([]models.User, error) {
 
 	return users, tx.Commit().Error
 }
+
+func (p *PgStorage) UpdateUser(userID uint, filters models.Filters) error {
+	log := p.log.With(slog.String("op", "PgStorage.UpdateUser"))
+	var user models.User
+
+	tx := p.db.Begin()
+	defer tx.Rollback()
+
+	if err := tx.First(&user, userID).Error; err != nil {
+		return err
+	}
+
+	// Update fields based on non-empty filter values
+	if filters.PassportNumber != "" {
+		user.PassportNumber = filters.PassportNumber
+	}
+	if filters.Surname != "" {
+		user.Surname = filters.Surname
+	}
+	if filters.Name != "" {
+		user.Name = filters.Name
+	}
+	if filters.Patronymic != "" {
+		user.Patronymic = filters.Patronymic
+	}
+	if filters.Address != "" {
+		user.Address = filters.Address
+	}
+
+	if err := tx.Save(&user).Error; err != nil {
+		log.Error("failed to update user", err)
+		return err
+	}
+
+	return tx.Commit().Error
+}
+
+func (p *PgStorage) DeleteUser(userID uint) error {
+	log := p.log.With(slog.String("op", "PgStorage.DeleteUser"))
+	tx := p.db.Begin()
+
+	res := tx.Delete(&models.User{}, userID)
+	if res.Error != nil {
+		log.Error("failed to delete user. Rolled back", res.Error)
+		return res.Error
+	}
+
+	return tx.Commit().Error
+}
