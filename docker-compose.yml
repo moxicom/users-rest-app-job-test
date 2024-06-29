@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  app:
+      depends_on:
+          - postgres
+      build:
+        context: .
+        dockerfile: dockerfile
+      volumes:
+        - .:/app
+      networks:
+        - app-network
+      ports:
+        - 8080:8080
+      command: ["/main"]
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${DB_PORT}:5432"
+    # volumes:
+    #   - new_postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+# volumes:
+#   new_postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
