@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type User struct {
 	ID             uint   `gorm:"primarykey"`
 	PassportNumber string `gorm:"uniqueIndex" json:"passport_number"`
@@ -11,8 +13,9 @@ type User struct {
 }
 
 type Task struct {
-	ID       uint `gorm:"primarykey"`
-	UserID   uint `gorm:"index"`
-	TaskName string
-	Duration float64
+	ID        uint      `json:"id" gorm:"primarykey"`
+	UserID    uint      `json:"user_id" binding:"required" gorm:"index"`
+	TaskName  string    `json:"task_name" binding:"required"`
+	StartTime time.Time `json:"start_time"`
+	EndTime   time.Time `json:"end_time"`
 }

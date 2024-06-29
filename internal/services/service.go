@@ -14,16 +14,20 @@ type User interface {
 	UpdateUser(uint, models.Filters) error
 }
 
-type Tasks interface {
-	GetUserTasks(userID int)
+type Task interface {
+	CreateTask(models.Task) (uint, error)
+	EndTask(uint) error
+	DeleteTask(uint) error
 }
 
 type Service struct {
+	Task
 	User
 }
 
 func New(s storage.Storage, log *slog.Logger) *Service {
 	return &Service{
 		User: newUserService(s, log),
+		Task: newTaskService(s, log),
 	}
 }

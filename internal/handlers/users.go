@@ -19,7 +19,8 @@ func (h *Handler) CreateUser(c *gin.Context) {
 
 	var user createUser
 	if err := c.ShouldBindJSON(&user); err != nil {
-		c.Status(http.StatusBadRequest)
+		log.Error("error while parsing json ", err)
+		c.JSON(http.StatusBadRequest, Message{"invalid body data"})
 		return
 	}
 
@@ -44,7 +45,7 @@ func (h *Handler) GetUsers(c *gin.Context) {
 	log := h.log.With(slog.String("op", "handler.GetUsers"))
 	filt := utils.GetFilters(c)
 
-	users, err := h.service.GetUsers(filt)
+	users, err := h.service.User.GetUsers(filt)
 	if err != nil {
 		log.Error("failed to get users")
 		c.JSON(http.StatusInternalServerError, Message{"failed to get users"})
@@ -80,7 +81,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		}
 	}
 
-	err = h.service.UpdateUser(uint(id64), filt)
+	err = h.service.User.UpdateUser(uint(id64), filt)
 	if err != nil {
 		log.Error("failed to update user", err)
 		c.JSON(http.StatusInternalServerError, Message{"failed to update user"})
@@ -96,10 +97,11 @@ func (h *Handler) DeleteUser(c *gin.Context) {
 	id := c.Param("id")
 	id64, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
-		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, Message{"id should be integer"})
+		return
 	}
 
-	err = h.service.DeleteUser(uint(id64))
+	err = h.service.User.DeleteUser(uint(id64))
 	if err != nil {
 		log.Error("failed to delete user", slog.String("id", id))
 		c.JSON(http.StatusInternalServerError, Message{"failed to delete user"})
