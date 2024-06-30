@@ -1,7 +1,9 @@
 package postgres
 
 import (
+	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/moxicom/user_test/internal/models"
 )
@@ -18,7 +20,7 @@ func (p *PgStorage) AddUser(user models.User) (uint, error) {
 	return user.ID, nil
 }
 
-func (p *PgStorage) GetUsers(filters models.Filters) ([]models.User, error) {
+func (p *PgStorage) GetUsers(filters models.UserFilters) ([]models.User, error) {
 	log := p.log.With(slog.String("op", "PgStorage.GetUsers"))
 	var users []models.User
 
@@ -53,7 +55,7 @@ func (p *PgStorage) GetUsers(filters models.Filters) ([]models.User, error) {
 	return users, tx.Commit().Error
 }
 
-func (p *PgStorage) UpdateUser(userID uint, filters models.Filters) error {
+func (p *PgStorage) UpdateUser(userID uint, filters models.UserFilters) error {
 	log := p.log.With(slog.String("op", "PgStorage.UpdateUser"))
 	var user models.User
 
@@ -100,4 +102,55 @@ func (p *PgStorage) DeleteUser(userID uint) error {
 	}
 
 	return tx.Commit().Error
+}
+
+func (p *PgStorage) GetUserTasks(userID uint, startTime time.Time, endTime time.Time, isAsc bool) ([]models.TaskWithTotalTime, error) {
+	log := p.log.With(slog.String("op", "PgStorage.GetUserTasks"))
+
+	var tasks []models.TaskWithTotalTime
+	tx := p.db.Begin()
+	defer tx.Rollback()
+
+	db := p.db
+
+	subquery := db.Model(&models.TaskPeriod{}).
+		Select("task_id, SUM(EXTRACT(EPOCH FROM COALESCE(end_time, CURRENT_TIMESTAMP) - COALESCE(start_time, CURRENT_TIMESTAMP))) AS total_duration").
+		Group("task_id")
+
+	// Main query to fetch tasks with total durations
+	res := db.
+		// Joins("LEFT JOIN (?) AS periods ON tasks.id = periods.task_id", subquery).
+		// Model(&models.Task{}).
+		// Select("tasks.*, COALESCE(periods.total_duration, 0) AS duration").
+		// Where("tasks.user_id = ? AND tasks.created_at BETWEEN ? AND ?", userID, startTime, endTime).
+		// Order("duration DESC").
+		// Find(&tasks)
+		Joins("LEFT JOIN (?) AS periods ON tasks.id = periods.task_id", subquery).
+		Model(&models.Task{}).
+		Select(`
+        tasks.*,
+        COALESCE(periods.total_duration, 0) AS total_seconds,
+        FLOOR(COALESCE(periods.total_duration, 0) / 3600) AS duration_hours,
+        FLOOR(COALESCE(periods.total_duration, 0) / 60) AS duration_minutes
+    `).
+		Where("tasks.user_id = ? AND tasks.created_at BETWEEN ? AND ?", userID, startTime, endTime).
+		Order("total_seconds DESC").
+		Find(&tasks)
+
+	// res := subquery.Find(&tasks)
+
+	err := res.Error
+	if err != nil {
+		log.Error("Failed to get user tasks", slog.Uint64("user_id", uint64(userID)), slog.Any("err", err.Error()))
+		return nil, err
+	}
+
+	// Convert total_time from seconds to time.Duration
+	// for i := range tasks {
+	// 	tasks[i].Duration = time.Duration(tasks[i].Duration) * time.Second
+	// }
+	fmt.Println()
+	fmt.Println(tasks)
+	fmt.Println()
+	return tasks, nil
 }

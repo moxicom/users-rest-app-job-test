@@ -2,6 +2,7 @@ package services
 
 import (
 	"log/slog"
+	"time"
 
 	"github.com/moxicom/user_test/internal/models"
 	"github.com/moxicom/user_test/internal/storage"
@@ -44,7 +45,7 @@ func (s *UserService) CreateUser(passport string) (uint, error) {
 	return userID, nil
 }
 
-func (s *UserService) GetUsers(f models.Filters) ([]models.User, error) {
+func (s *UserService) GetUsers(f models.UserFilters) ([]models.User, error) {
 	return s.s.GetUsers(f)
 }
 
@@ -52,6 +53,10 @@ func (s *UserService) DeleteUser(userID uint) error {
 	return s.s.DeleteUser(userID)
 }
 
-func (s *UserService) UpdateUser(userID uint, filters models.Filters) error {
+func (s *UserService) UpdateUser(userID uint, filters models.UserFilters) error {
 	return s.s.UpdateUser(userID, filters)
+}
+
+func (s *UserService) GetUserTasks(userID uint, startTime, endTime time.Time, filters models.TaskFilters) ([]models.TaskWithTotalTime, error) {
+	return s.s.GetUserTasks(userID, startTime, endTime, filters.Asc)
 }

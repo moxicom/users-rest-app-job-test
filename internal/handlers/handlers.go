@@ -47,8 +47,10 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	tasks := router.Group("/tasks")
 	{
 		tasks.POST("/", h.CreateTask)
-		tasks.POST("/:id/end", h.EndTask)
 		tasks.DELETE("/:id", h.DeleteTask)
+		tasks.POST("/:id/start", h.StartPeriod)
+		tasks.POST("/:id/end", h.EndPeriod)
+		tasks.POST(":id/finish", h.FinishTask)
 	}
 
 	return router

@@ -9,5 +9,5 @@ import (
 
 func MigratePostgres(db *gorm.DB, log *slog.Logger) {
 	log.Info("Making automigration...")
-	db.AutoMigrate(&models.User{}, &models.Task{})
+	db.AutoMigrate(&models.User{}, &models.Task{}, &models.TaskPeriod{})
 }

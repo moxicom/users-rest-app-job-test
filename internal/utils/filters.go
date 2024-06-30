@@ -5,8 +5,8 @@ import (
 	"github.com/moxicom/user_test/internal/models"
 )
 
-func GetFilters(c *gin.Context) models.Filters {
-	f := models.Filters{
+func GetFilters(c *gin.Context) models.UserFilters {
+	f := models.UserFilters{
 		PassportNumber: c.Query("passport_number"),
 		Surname:        c.Query("surname"),
 		Name:           c.Query("name"),
