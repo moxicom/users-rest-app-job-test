@@ -13,29 +13,38 @@ func (p *PgStorage) CreateTask(task models.Task) (uint, error) {
 
 	result := p.db.Create(&task)
 	if result.Error != nil {
-		log.Error("failed to add task", result.Error)
+		log.Error("failed to add task", slog.Any("err", result.Error))
 		return 0, result.Error
 	}
 	log.Debug("user added to storage", slog.Any("task", task))
 	return task.ID, nil
 }
 
-func (p *PgStorage) FinishTask(taskID uint, endTime time.Time) error {
-	// TODO - fix
-
+func (p *PgStorage) FinishTask(taskID uint, finishTime time.Time) error {
 	log := p.log.With(slog.String("op", "PgStorage.EndTask"))
+	// TODO - fix
+	// TODO - end period
+
+	err := p.EndPeriod(taskID, finishTime)
+
+	if err != storage.ErrPeriodNotStarted {
+		return err
+	}
+
 	var task models.Task
 
 	tx := p.db.Begin()
 	defer tx.Rollback()
 
 	if err := tx.First(&task, taskID).Error; err != nil {
-		log.Error("Error selecting task on ending ", err)
+		log.Error("Error selecting task on ending ", slog.Any("err", err))
 		return err
 	}
 
+	task.IsFinished = true
+
 	if err := tx.Save(&task).Error; err != nil {
-		log.Error("failed to update task", err)
+		log.Error("failed to finish task", slog.Any("err", err))
 		return err
 	}
 
@@ -49,7 +58,7 @@ func (p *PgStorage) DeleteTask(taskID uint) error {
 
 	res := tx.Delete(&models.Task{}, taskID)
 	if res.Error != nil {
-		log.Error("failed to delete task. Rolled back", res.Error)
+		log.Error("failed to delete task. Rolled back", slog.Any("err", res.Error))
 		return res.Error
 	}
 
@@ -65,7 +74,7 @@ func (p *PgStorage) StartPeriod(taskID uint, startTime time.Time) error {
 
 	tx.Where("task_id = ? AND end_time IS NULL", taskID).Last(&ongoingPeriod)
 	if ongoingPeriod.ID != 0 {
-		log.Warn("task can not be started. Should be finished", storage.ErrPeriodNotFinished)
+		log.Warn("task can not be started. Should be finished", slog.Any("err", storage.ErrPeriodNotFinished))
 		return storage.ErrPeriodNotFinished
 	}
 
@@ -73,7 +82,7 @@ func (p *PgStorage) StartPeriod(taskID uint, startTime time.Time) error {
 	period := models.TaskPeriod{TaskID: taskID, StartTime: &now}
 	res := tx.Create(&period)
 	if res.Error != nil {
-		log.Error("failed to start period", slog.Uint64("task_id", uint64(taskID)), res.Error)
+		log.Error("failed to start period", slog.Uint64("task_id", uint64(taskID)), slog.Any("err", res.Error))
 		return res.Error
 	}
 
@@ -89,7 +98,7 @@ func (p *PgStorage) EndPeriod(taskID uint, startTime time.Time) error {
 
 	tx.Where("task_id = ? AND end_time IS NULL", taskID).Last(&ongoingPeriod)
 	if ongoingPeriod.ID == 0 {
-		log.Warn("task can not be finished. Should be started", storage.ErrPeriodNotFinished)
+		log.Warn("task can not be finished. Should be started", slog.Any("err", storage.ErrPeriodNotFinished))
 		return storage.ErrPeriodNotStarted
 	}
 
@@ -98,7 +107,7 @@ func (p *PgStorage) EndPeriod(taskID uint, startTime time.Time) error {
 
 	res := tx.Save(&ongoingPeriod)
 	if res.Error != nil {
-		log.Error("failed to end period", slog.Uint64("task_id", uint64(taskID)), res.Error)
+		log.Error("failed to end period", slog.Uint64("task_id", uint64(taskID)), slog.Any("err", res.Error))
 		return res.Error
 	}
 	return tx.Commit().Error

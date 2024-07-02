@@ -13,7 +13,7 @@ func (p *PgStorage) AddUser(user models.User) (uint, error) {
 
 	result := p.db.Create(&user)
 	if result.Error != nil {
-		log.Error("failed to add user", result.Error)
+		log.Error("failed to add user", slog.Any("err", result.Error))
 		return 0, result.Error
 	}
 	log.Debug("user added to storage", slog.Any("user", user))
@@ -46,7 +46,7 @@ func (p *PgStorage) GetUsers(filters models.UserFilters) ([]models.User, error) 
 
 	res := query.Find(&users)
 	if res.Error != nil {
-		log.Error("failed to get users", res.Error)
+		log.Error("failed to get users", slog.Any("err", res.Error))
 		return []models.User{}, res.Error
 	}
 
@@ -84,7 +84,7 @@ func (p *PgStorage) UpdateUser(userID uint, filters models.UserFilters) error {
 	}
 
 	if err := tx.Save(&user).Error; err != nil {
-		log.Error("failed to update user", err)
+		log.Error("failed to update user", slog.Any("err", err))
 		return err
 	}
 
@@ -97,7 +97,7 @@ func (p *PgStorage) DeleteUser(userID uint) error {
 
 	res := tx.Delete(&models.User{}, userID)
 	if res.Error != nil {
-		log.Error("failed to delete user. Rolled back", res.Error)
+		log.Error("failed to delete user. Rolled back", slog.Any("err", res.Error))
 		return res.Error
 	}
 

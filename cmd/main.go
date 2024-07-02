@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -16,6 +17,12 @@ import (
 	"github.com/moxicom/user_test/internal/storage/postgres"
 	"github.com/moxicom/user_test/internal/utils"
 )
+
+//	@title			time-tracker application
+//	@version		0.1
+//	@description	This is a simple backend for time-tracker application without authorization
+
+// @BasePath	/
 
 func main() {
 	runServer(context.Background())
@@ -31,7 +38,7 @@ func runServer(ctx context.Context) error {
 	log := utils.SetupLogger(utils.EnvLocal)
 
 	if err := godotenv.Load(); err != nil {
-		log.Error("%s", err)
+		log.Error("%s", slog.Any("err", err))
 		return err
 	}
 
@@ -59,7 +66,7 @@ func runServer(ctx context.Context) error {
 
 	go func() {
 		if err = server.Run(os.Getenv("SERVER_PORT"), handler.InitRoutes()); err != nil {
-			log.Error("listen and serve: %s", err)
+			log.Error("listen and serve: %s", slog.Any("err", err))
 			return
 		}
 	}()

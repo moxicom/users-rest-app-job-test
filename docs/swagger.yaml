@@ -1,0 +1,392 @@
+basePath: /
+definitions:
+  handlers.Message:
+    properties:
+      msg:
+        type: string
+    type: object
+  handlers.createUser:
+    properties:
+      passportNumber:
+        type: string
+    required:
+    - passportNumber
+    type: object
+  models.Task:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      is_finished:
+        type: boolean
+      task_name:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - task_name
+    - user_id
+    type: object
+  models.User:
+    properties:
+      address:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      passport_number:
+        type: string
+      patronymic:
+        type: string
+      surname:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: This is a simple backend for time-tracker application without authorization
+  title: time-tracker application
+  version: "0.1"
+paths:
+  /tasks:
+    post:
+      consumes:
+      - application/json
+      description: Create a new task for a user
+      parameters:
+      - description: Task object
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/models.Task'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task created successfully
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "400":
+          description: Invalid body data
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "500":
+          description: Failed to create task
+          schema:
+            $ref: '#/definitions/handlers.Message'
+      summary: Create a new task
+      tags:
+      - tasks
+  /tasks/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a task by ID
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task deleted
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "400":
+          description: ID should be an integer
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "500":
+          description: Failed to delete task
+          schema:
+            $ref: '#/definitions/handlers.Message'
+      summary: Delete a task
+      tags:
+      - tasks
+  /tasks/{id}/end:
+    post:
+      consumes:
+      - application/json
+      description: End a period for a task by ID
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Period ended
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "400":
+          description: Failed to end period. Period not started
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "500":
+          description: Failed to end
+          schema:
+            $ref: '#/definitions/handlers.Message'
+      summary: End a period for a task
+      tags:
+      - tasks
+  /tasks/{id}/finish:
+    post:
+      consumes:
+      - application/json
+      description: Mark a task as finished by ID
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task ended
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "400":
+          description: ID should be an integer
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "500":
+          description: Failed to finish task
+          schema:
+            $ref: '#/definitions/handlers.Message'
+      summary: Finish a task
+      tags:
+      - tasks
+  /tasks/{id}/start:
+    post:
+      consumes:
+      - application/json
+      description: Start a period for a task by ID
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Period started
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "400":
+          description: Failed to start period. Period not finished
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "500":
+          description: Failed to start
+          schema:
+            $ref: '#/definitions/handlers.Message'
+      summary: Start a period for a task
+      tags:
+      - tasks
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve users based on filters
+      parameters:
+      - description: Passport Number
+        in: query
+        name: passport_number
+        type: string
+      - description: Surname
+        in: query
+        name: surname
+        type: string
+      - description: Name
+        in: query
+        name: name
+        type: string
+      - description: Patronymic
+        in: query
+        name: patronymic
+        type: string
+      - description: Address
+        in: query
+        name: address
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of users
+          schema:
+            items:
+              $ref: '#/definitions/models.User'
+            type: array
+        "500":
+          description: Failed to get users
+          schema:
+            $ref: '#/definitions/handlers.Message'
+      summary: Get users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Create a new user with the provided passport number
+      parameters:
+      - description: User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.createUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User ID
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "400":
+          description: Invalid body data or invalid passport number
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "500":
+          description: Failed to create user
+          schema:
+            $ref: '#/definitions/handlers.Message'
+      summary: Create a new user
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deleted
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "400":
+          description: ID should be an integer
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "500":
+          description: Failed to delete user
+          schema:
+            $ref: '#/definitions/handlers.Message'
+      summary: Delete a user
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Update a user with the provided data
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Passport Number
+        in: query
+        name: passport_number
+        type: string
+      - description: Surname
+        in: query
+        name: surname
+        type: string
+      - description: Name
+        in: query
+        name: name
+        type: string
+      - description: Patronymic
+        in: query
+        name: patronymic
+        type: string
+      - description: Address
+        in: query
+        name: address
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User updated
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "400":
+          description: Incorrect ID or invalid input data
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "500":
+          description: Failed to update user
+          schema:
+            $ref: '#/definitions/handlers.Message'
+      summary: Update a user
+      tags:
+      - users
+  /users/{id}/tasks:
+    get:
+      consumes:
+      - application/json
+      description: Get tasks for a user within a specified date range and with optional
+        sorting
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Start date in RFC3339 format
+        in: query
+        name: start_date
+        required: true
+        type: string
+      - description: End date in RFC3339 format
+        in: query
+        name: end_date
+        required: true
+        type: string
+      - description: Sort order, can be 'asc' or 'desc'
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tasks found
+          schema:
+            items:
+              $ref: '#/definitions/models.Task'
+            type: array
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/handlers.Message'
+        "500":
+          description: Failed to get tasks for user
+          schema:
+            $ref: '#/definitions/handlers.Message'
+      summary: Get user tasks
+      tags:
+      - users
+swagger: "2.0"

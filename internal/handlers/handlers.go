@@ -5,7 +5,10 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	_ "github.com/moxicom/user_test/docs"
 	"github.com/moxicom/user_test/internal/services"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type Message struct {
@@ -33,7 +36,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		MaxAge:           12 * 3600,
 	}))
 
-	// router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	users := router.Group("/users")
 	{
