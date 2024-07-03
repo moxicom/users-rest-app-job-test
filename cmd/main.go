@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"log/slog"
@@ -18,12 +19,15 @@ import (
 	"github.com/moxicom/user_test/internal/utils"
 )
 
+var (
+	envLog string
+)
+
 //	@title			time-tracker application
 //	@version		0.1
 //	@description	This is a simple backend for time-tracker application without authorization
 
 // @BasePath	/
-
 func main() {
 	runServer(context.Background())
 	log.Println("DB_HOST:", os.Getenv("DB_HOST"))
@@ -35,7 +39,13 @@ func main() {
 }
 
 func runServer(ctx context.Context) error {
-	log := utils.SetupLogger(utils.EnvLocal)
+	flag.StringVar(
+		&envLog,
+		"envLog",
+		utils.EnvProd,
+		fmt.Sprintf("'%s' or '%s' to setup logger", utils.EnvProd, utils.EnvLocal),
+	)
+	log := utils.SetupLogger(envLog)
 
 	if err := godotenv.Load(); err != nil {
 		log.Error("%s", slog.Any("err", err))
