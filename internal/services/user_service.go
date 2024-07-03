@@ -6,6 +6,7 @@ import (
 
 	"github.com/moxicom/user_test/internal/models"
 	"github.com/moxicom/user_test/internal/storage"
+	"github.com/moxicom/user_test/internal/utils"
 )
 
 type UserService struct {
@@ -20,20 +21,20 @@ func newUserService(s storage.Storage, log *slog.Logger) *UserService {
 func (s *UserService) CreateUser(passport string) (uint, error) {
 	log := s.log.With(slog.String("op", "service.CreateUser"))
 
-	// TODO: UNCOMMIT LATER - use api to get user data
-	// user, err := utils.GetUserData(passport)
-	// if err != nil {
-	// 	log.Error("failed to get user data")
-	// 	return 0, err
-	// }
-
-	user := models.User{
-		PassportNumber: passport,
-		Surname:        "alexio" + passport,
-		Name:           "alex" + passport,
-		Patronymic:     "alexovich" + passport,
-		Address:        "alex street" + passport,
+	user, err := utils.GetUserData(passport)
+	if err != nil {
+		log.Error("failed to get user data")
+		return 0, err
 	}
+
+	// test data
+	// user := models.User{
+	// 	PassportNumber: passport,
+	// 	Surname:        "alexio" + passport,
+	// 	Name:           "alex" + passport,
+	// 	Patronymic:     "alexovich" + passport,
+	// 	Address:        "alex street" + passport,
+	// }
 
 	log.Debug("Got new user info", slog.Any("user", user))
 

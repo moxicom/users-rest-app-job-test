@@ -22,13 +22,13 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "${DB_PORT}:5432"
-    # volumes:
-    #   - new_postgres_data:/var/lib/postgresql/data
+    volumes:
+      - new_postgres_data:/var/lib/postgresql/data
     networks:
       - app-network
 
-# volumes:
-#   new_postgres_data:
+volumes:
+  new_postgres_data:
 
 networks:
   app-network:
